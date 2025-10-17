@@ -1,0 +1,16 @@
+<div class="trending">
+  <h3>Top Trending</h3>
+  <div class="trend-list">
+    {% for trend in trending_movies %}
+    <a href="{% url 'movie_detail' trend.id %}" class="trend-item" style="text-decoration: none;">
+      <div class="rank">{{ forloop.counter }}</div>
+      <div class="title">
+        <div>{{ trend.name }}</div>
+        <small>{{ trend.views }} lượt xem</small>
+      </div>
+    </a>
+    {% empty %}
+    <p>Chưa có phim trending.</p>
+    {% endfor %}
+  </div>
+</div>

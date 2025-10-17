@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Motchill Clone</title>
+    <style>
+      body { 
+        margin: 0; 
+        font-family: Arial, sans-serif; 
+        background: #111; color: #fff; 
+      }
+      header { 
+        background: #222; 
+        padding: 15px 30px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+      }
+      header h1 { 
+        margin: 0; 
+        font-size: 24px; 
+        color: #ff9800; 
+      }
+      .categories { 
+        display: flex; 
+        justify-content: center; 
+        gap: 15px; padding: 20px; 
+        flex-wrap: wrap; 
+      }
+      .cat { 
+        background: linear-gradient(45deg, #444, #888); 
+        padding: 15px 25px; 
+        border-radius: 10px; 
+        font-weight: bold; 
+        cursor: pointer; 
+        min-width: 120px; 
+        text-align: center; 
+        transition: 0.3s; 
+      }
+      .cat:hover { 
+        background: linear-gradient(45deg, #ff9800, #ff5722); 
+      }
+      .section { 
+        padding: 20px 40px; 
+      }
+      .section h2 { 
+        margin-bottom: 15px; 
+        font-size: 22px; 
+        border-bottom: 2px solid #ff9800; 
+        display: inline-block; 
+        padding-bottom: 5px; 
+      }
+      .movies { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+        gap: 20px; 
+      }
+      .movie { 
+        background: #222; border-radius: 10px; overflow: hidden; position: relative; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+      .movie:hover { transform: scale(1.05); box-shadow: 0 0 15px #ff9800; }
+      .movie img { width: 100%; height: 250px; object-fit: cover; }
+      .badge { position: absolute; top: 10px; left: 10px; background: #b36c32; padding: 5px 8px; font-size: 12px; border-radius: 5px; }
+      .movie-info { padding: 10px; }
+      .movie-info h4 { margin: 0 0 5px 0; font-size: 16px; color: #fff; }
+      .movie-info p { font-size: 12px; color: #ccc; margin-top: 5px; height: 40px; overflow: hidden; }
+      .search-header { padding: 20px 40px; }
+      .filters { display: flex; gap: 15px; margin-top: 15px; }
+      .filters select { padding: 8px 12px; border-radius: 6px; background: #222; color: #fff; }
+      .search-results { display: flex; gap: 20px; padding: 20px 40px; }
+      .trending { flex: 1; background: #111; padding: 15px; border-radius: 10px; }
+      .trending h3 { border-left: 3px solid #ff9800; padding-left: 10px; font-size: 18px; }
+      .trending ul { list-style: none; margin: 15px 0; padding: 0; }
+      .trending li { margin-bottom: 10px; }
+      .trending img { width: 60px; border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+  {% include "component/indexPage/header.html" %}
+
+  {% if query or request.GET.genre or request.GET.country or request.GET.year %}
+  <!-- ========== Giao diện khi có tìm kiếm (dù có kết quả hay không) ========== -->
+  <div class="search-header">
+    <div class="breadcrumb" style="font-size: 14px; color: #aaa">
+      Trang chủ / Tìm kiếm phim: "<span style="color: #fff">{{ query }}</span>"
+    </div>
+    <h2 style="margin-top: 10px; font-size: 26px; color: #fff">
+      Tìm kiếm phim: "<span style="color: #ff9800">{{ query }}</span>"
+    </h2>
+    <p style="color: #bbb; margin-top: 5px">
+      Kết quả tìm kiếm phim: "<span style="color: #fff">{{ query }}</span>" tại MotPhim.
+    </p>
+
+    <!-- Bộ lọc -->
+    <form method="get" class="filters">
+      <input type="hidden" name="q" value="{{ query }}" />
+      <select name="genre">
+        <option value="">Thể loại</option>
+        {% for g in genres %}
+        <option value="{{ g.id }}" {% if request.GET.genre == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="country">
+        <option value="">Quốc gia</option>
+        {% for c in countries %}
+        <option value="{{ c.id }}" {% if request.GET.country == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="year">
+        <option value="">Năm</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Lọc</button>
+    </form>
+  </div>
+
+  <div class="search-results">
+    <!-- Kết quả phim -->
+    <div style="flex:3">
+      <div class="movies">
+        {% if search_results %}
+          {% for movie in search_results %}
+          <div class="movie">
+            <img src="{{ movie.poster|default:'/static/no-poster.png' }}" alt="{{ movie.name }}" />
+            <div class="badge">Vietsub</div>
+            <div class="movie-info">
+              <h4>{{ movie.name }}</h4>
+              <p>{{ movie.description|truncatechars:100 }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        {% elif error %}
+          <p style="color: #bbb; font-size: 16px; margin-top: 20px;">
+            {{ error }}
+          </p>
+        {% else %}
+          <p style="color: #bbb; font-size: 16px; margin-top: 20px;">
+            Không có kết quả cho "<span style="color: #ff9800">{{ query }}</span>"
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Trending -->
+    <div class="trending">
+      <h3>Trending</h3>
+      <ul>
+        {% for movie in trending_movies %}
+        <li>
+          <div style="display: flex; gap: 10px; align-items: center">
+            <img src="{{ movie.poster|default:'/static/no-poster.png' }}" style="width: 50px; height: 70px; object-fit: cover" />
+            <div>
+              <p style="margin: 0; font-size: 14px; color: #fff">{{ movie.name }}</p>
+              <span style="font-size: 12px; color: #bbb">
+                {{ movie.rating|default:"N/A" }} ★ {{ movie.release_year }}
+              </span>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+
+  {% else %}
+  <!-- ========== Giao diện mặc định trang chủ ========== -->
+  <div class="categories">
+    <div class="cat">Phim Mới</div>
+    <div class="cat">Phim Bộ</div>
+    <div class="cat">Phim Lẻ</div>
+    <div class="cat">Hàn Quốc</div>
+    <div class="cat">Trung Quốc</div>
+    <div class="cat">Cổ Trang</div>
+    <div class="cat">Tình Cảm</div>
+  </div>
+
+  <div id="movie-sections">
+    {% for category, movies in movie_sections.items %}
+    <div class="section">
+      <h2 style="color: #ff9800">{{ category }}</h2>
+      <div class="movies">
+        {% for movie in movies %}
+        <a href="{% url 'movie_detail' movie.id %}" style="text-decoration:none; color:inherit;">
+          <div class="movie">
+            <img src="{{ movie.poster|default:'/static/no-poster.png' }}" alt="{{ movie.name }}" />
+            <div class="badge">Vietsub</div>
+            <div class="movie-info">
+              <h4>{{ movie.name }}</h4>
+              <p>{{ movie.description|truncatechars:100 }}</p>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</body>
+</html>

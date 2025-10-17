@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xóa phim</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h2 {
+            color: #b30000;
+        }
+        .warning {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border: 1px solid #cc0000;
+            border-radius: 4px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #cc0000;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #990000;
+        }
+        .back-link {
+            display: inline-block;
+            margin-left: 15px;
+            color: #555;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h2>Xác nhận xóa phim</h2>
+
+    <div class="warning">
+        Bạn có chắc chắn muốn xóa phim: <strong>{{ movie.title }}</strong> (Ngày phát hành: {{ movie.release_date }}) ?
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">🗑️ Xóa</button>
+        <a href="{% url 'movie_admin_list' %}" class="back-link">Hủy</a>
+    </form>
+</body>
+</html>

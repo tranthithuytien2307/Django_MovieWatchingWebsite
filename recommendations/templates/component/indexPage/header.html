@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Header Motchill</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: #fff;
+      }
+
+      .site-header {
+        background: rgba(0, 0, 0, 0.85);
+        padding: 10px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #f39c12;
+        text-decoration: none;
+        letter-spacing: 1px;
+      }
+
+      /* Thanh tìm kiếm */
+      .search-bar {
+        flex: 1;
+        margin: 0 30px;
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 5px 10px;
+      }
+
+      .search-bar input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 8px;
+        background: transparent;
+        color: #fff;
+        font-size: 14px;
+      }
+
+      .search-bar button {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      /* Menu */
+      .navbar {
+        display: flex;
+        align-items: center;
+      }
+
+      .navbar ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+      }
+
+      .navbar li {
+        position: relative;
+        margin: 0 12px;
+      }
+
+      .navbar a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 8px 10px;
+        display: block;
+      }
+
+      /* Dropdown */
+      .dropdown-content {
+        display: none; /* ẩn đi */
+        flex-direction: column; /* xếp dọc */
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #1c1c1c;
+        padding: 10px 0;
+        border-radius: 8px;
+        min-width: 200px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
+        z-index: 100;
+      }
+
+      /* Khi hover vào dropdown (thể loại hoặc quốc gia) */
+      .dropdown:hover .dropdown-content {
+        display: flex; /* hiện ra khi hover */
+      }
+
+      .dropdown-content div {
+        padding: 8px 16px;
+        color: #ddd;
+        cursor: pointer;
+        font-size: 15px;
+        transition: color 0.25s;
+      }
+
+      .dropdown-content div:hover {
+        color: #f39c12;
+        background: #333; /* thêm background khi hover cho dễ nhìn */
+      }
+
+      .login-btn {
+        background: #fff;
+        color: #000;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+      }
+
+      .login-btn:hover {
+        background: #f39c12;
+        color: #fff;
+      }
+
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-text-fill-color: #fff !important;
+        transition: background-color 9999s ease-in-out 0s !important;
+      }
+
+      #suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #222;
+        border-radius: 8px;
+        margin-top: 5px;
+        overflow: hidden;
+        z-index: 1000;
+      }
+
+      #suggestions div {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #333;
+        color: #fff;
+      }
+
+      #suggestions div:hover {
+        background: #444;
+      }
+    </style>
+    <script>
+      function autocomplete() {
+        const query = document.getElementById("movie").value;
+        if (query.length < 2) {
+          document.getElementById("suggestions").innerHTML = "";
+          return;
+        }
+        fetch(`/search/?q=${query}`)
+          .then((res) => res.json())
+          .then((data) => {
+            let list = document.getElementById("suggestions");
+            list.innerHTML = "";
+            data.forEach((item) => {
+              let div = document.createElement("div");
+              div.innerHTML = item;
+              div.onclick = () => {
+                document.getElementById("movie").value = item;
+                list.innerHTML = "";
+              };
+              list.appendChild(div);
+            });
+          });
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <!-- Logo -->
+      <a href="{% url 'index' %}" class="logo">Fairy</a>
+
+      <!-- Thanh tìm kiếm -->
+      <form action="{% url 'recommend' %}" class="search-bar">
+        <input
+          type="text"
+          id="movie"
+          name="movie"
+          onkeyup="autocomplete()"
+          placeholder="Tìm kiếm phim..."
+          required
+        />
+        <button type="submit">🔍</button>
+        <div id="suggestions"></div>
+      </form>
+
+      <!-- Menu -->
+      <nav class="navbar">
+        <ul>
+          <li class="dropdown">
+            <a href="#">Thể Loại ▼</a>
+            <div class="dropdown-content">
+              <div>Hành Động</div>
+              <div>Võ Thuật</div>
+              <div>Tài Liệu</div>
+              <div>BL</div>
+              <!-- thêm các thể loại khác -->
+            </div>
+          </li>
+          <li class="dropdown">
+            <a href="#">Quốc Gia ▼</a>
+            <div class="dropdown-content">
+              <div>Việt Nam</div>
+              <div>Hàn Quốc</div>
+              <div>Trung Quốc</div>
+              <!-- thêm các quốc gia khác -->
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Nút đăng nhập hoặc hiển thị user -->
+      {% if request.session.user %}
+      <div style="color: #fff">Xin chào, {{ request.session.user.name }}</div>
+      {% else %}
+      <a href="{% url 'login' %}" class="login-btn">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M28.8648 26.5C26.9611 23.2087 24.0273 20.8487 20.6036 19.73C22.2971 18.7218 23.6129 17.1856 24.3489 15.3572C25.0848 13.5289 25.2002 11.5095 24.6774 9.60919C24.1546 7.70889 23.0224 6.03274 21.4548 4.83815C19.8872 3.64357 17.9708 2.9966 15.9999 2.9966C14.0289 2.9966 12.1125 3.64357 10.5449 4.83815C8.97725 6.03274 7.84509 7.70889 7.32228 9.60919C6.79946 11.5095 6.91489 13.5289 7.65083 15.3572C8.38678 17.1856 9.70256 18.7218 11.3961 19.73C7.97235 20.8475 5.0386 23.2075 3.13485 26.5C3.06504 26.6138 3.01873 26.7405 2.99866 26.8725C2.97859 27.0045 2.98517 27.1392 3.01801 27.2687C3.05084 27.3981 3.10927 27.5197 3.18984 27.6262C3.27041 27.7327 3.3715 27.8219 3.48713 27.8887C3.60277 27.9555 3.73061 27.9985 3.86311 28.0151C3.99561 28.0316 4.1301 28.0215 4.25863 27.9853C4.38716 27.9491 4.50713 27.8874 4.61146 27.8041C4.71579 27.7208 4.80238 27.6174 4.8661 27.5C7.2211 23.43 11.3836 21 15.9999 21C20.6161 21 24.7786 23.43 27.1336 27.5C27.1973 27.6174 27.2839 27.7208 27.3882 27.8041C27.4926 27.8874 27.6125 27.9491 27.7411 27.9853C27.8696 28.0215 28.0041 28.0316 28.1366 28.0151C28.2691 27.9985 28.3969 27.9555 28.5126 27.8887C28.6282 27.8219 28.7293 27.7327 28.8099 27.6262C28.8904 27.5197 28.9489 27.3981 28.9817 27.2687C29.0145 27.1392 29.0211 27.0045 29.001 26.8725C28.981 26.7405 28.9347 26.6138 28.8648 26.5ZM8.99985 12C8.99985 10.6155 9.41039 9.26215 10.1796 8.11101C10.9487 6.95986 12.042 6.06265 13.3211 5.53284C14.6001 5.00303 16.0076 4.8644 17.3655 5.1345C18.7234 5.4046 19.9706 6.07128 20.9496 7.05025C21.9286 8.02922 22.5953 9.2765 22.8653 10.6344C23.1354 11.9922 22.9968 13.3997 22.467 14.6788C21.9372 15.9579 21.04 17.0511 19.8888 17.8203C18.7377 18.5895 17.3843 19 15.9999 19C14.1439 18.998 12.3646 18.2599 11.0523 16.9476C9.73997 15.6352 9.00184 13.8559 8.99985 12Z"
+            fill="#374151"
+          />
+        </svg>
+        <span>Đăng Nhập</span>
+      </a>
+      {% endif %}
+    </header>
+  </body>
+</html>

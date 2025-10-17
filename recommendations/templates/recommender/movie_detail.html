@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ movie.name }}</title>
+    <link rel="stylesheet" href="{% static 'css/movie.css' %}" />
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f0f0f;
+        color: #fff;
+      }
+      .container {
+        display: flex;
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+      }
+      /* Cột trái: poster + info */
+      .left {
+        flex: 3;
+        margin-right: 20px;
+      }
+      .movie-header {
+        display: flex;
+        gap: 20px;
+        background: #1c1c1c;
+        padding: 20px;
+        border-radius: 8px;
+      }
+      .poster img {
+        width: 220px;
+        border-radius: 8px;
+      }
+      .info h1 {
+        margin: 0;
+        font-size: 26px;
+        color: #ff6633;
+      }
+      .meta {
+        margin: 10px 0;
+        line-height: 1.6;
+        font-size: 14px;
+        color: #ccc;
+      }
+      .rating {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #ffcc00;
+      }
+      .btns {
+        margin-top: 15px;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .btn-watch {
+        background: #e53935;
+        color: #fff;
+      }
+      .btn-download {
+        background: #1976d2;
+        color: #fff;
+      }
+
+      /* Sidebar phải */
+      .right {
+        flex: 1;
+      }
+      a {
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    {% include "component/indexPage/header.html" %}
+    <div class="container">
+      <!-- LEFT -->
+      <div class="left">
+        <div class="movie-header">
+          <div class="poster">
+            <img
+              src="{{ movie.poster|default:'/static/no-poster.png' }}"
+              alt="{{ movie.name }}"
+            />
+          </div>
+          <div class="info">
+            <h1>{{ movie.name }}</h1>
+            <div class="meta">
+              Đạo diễn: {{ movie.director.name }}<br />
+              Thời lượng: {{ movie.duration }} phút/tập<br />
+              Số tập: {{ movie.total_episodes }}<br />
+              Tình trạng: {% if movie.status %}Đang chiếu {% else %}Ngừng chiếu
+              {%endif %}<br />
+              Năm: {{ movie.release_year }} | Quốc gia: {{ movie.country }}<br />
+              Thể loại: {% for genre in movie.genres.all %}{{ genre.name }} 
+              {% if not forloop.last %}, {% endif %}{% endfor %}<br />
+              Diễn viên: {% for actor in movie.actors.all %}{{ actor.name }}
+              {%if not forloop.last %}, {% endif %}{% endfor %}
+            </div>
+            <div class="rating">⭐ {{ movie.rating }}/10</div>
+            <div class="btns">
+              <button class="btn btn-download">Tải phim</button>
+              <div class="btns">
+                <a href="{% url 'watch_movie' movie.id %}" class="btn btn-watch"
+                  >Xem phim</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Episodes -->
+        {% include "component/movie/episodes.html" %}
+
+        <!-- Actors -->
+        {% include "component/movie/actors.html" %}
+
+        <!-- Description -->
+        {% include "component/movie/description.html" %}
+
+        <!-- Tags -->
+        {% include "component/movie/tags.html" %}
+
+        <!-- Recommend -->
+        {% include "component/movie/recommend.html" %}
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right">{% include "component/movie/trending.html" %}</div>
+    </div>
+  </body>
+</html>

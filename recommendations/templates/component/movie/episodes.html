@@ -1,0 +1,12 @@
+<div class="episodes">
+  <h3>Tập mới nhất</h3>
+  <div class="episode-list">
+    {% for ep in movie.episodes.all %}
+    <a href="{% url 'watch_episode' movie.id ep.id %}"
+      >Tập {{ forloop.counter }}</a
+    >
+    {% empty %}
+    <p>Chưa có tập phim nào.</p>
+    {% endfor %}
+  </div>
+</div>

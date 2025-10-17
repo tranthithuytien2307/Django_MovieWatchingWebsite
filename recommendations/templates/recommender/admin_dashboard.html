@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <h3>Dashboard / Tổng quan</h3>
+
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card-box p-3 text-white" style="background:#f1c40f;">
+        <h4>{{ stats.orders }}</h4>
+        <p>Đơn hàng mới</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-box p-3 text-white" style="background:#e74c3c;">
+        <h4>{{ stats.movies }}</h4>
+        <p>Phim mới</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-box p-3 text-white" style="background:#3498db;">
+        <h4>{{ stats.users.new }}/{{ stats.users.total }}</h4>
+        <p>User mới/Tổng số user</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card-box p-3 text-white" style="background:#2ecc71;">
+        <h4>{{ stats.posts.new }}/{{ stats.posts.total }}</h4>
+        <p>Bài viết mới/Tổng số bài</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3">
+    <canvas id="revenueChart"></canvas>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('revenueChart');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ labels|safe }},
+        datasets: [{
+          label: 'Doanh thu',
+          data: {{ revenue|safe }},
+          borderColor: 'rgba(52, 152, 219,1.0)',
+          backgroundColor: 'rgba(52, 152, 219,0.2)',
+          tension: 0.3
+        }]
+      },
+    });
+  </script>
+{% endblock %}

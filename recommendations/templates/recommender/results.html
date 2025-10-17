@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết quả gợi ý</title>
+</head>
+<body>
+    {% if error %}
+        <p>{{ error }}</p>
+    {% else %}
+        <h2>Phim tương tự "{{ query }}"</h2>
+        <div style="display: flex; flex-wrap: wrap;">
+        {% for rec in recommendations %}
+            <div style="border: 1px solid #ccc; margin: 10px; padding: 10px; width: 200px;">
+                {% if rec.poster %}
+                    <img src="{{ rec.poster }}" alt="{{ rec.title }}">
+                {% endif %}
+                <h4>{{ rec.title }}</h4>
+                <p>Điểm: {{ rec.score }}</p>
+                <p>{{ rec.overview|truncatewords:20 }}</p>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    <a href="/">Quay lại</a>
+</body>
+</html>

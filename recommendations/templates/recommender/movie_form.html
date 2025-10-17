@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}  {# 🔹 Thêm dòng này #}
+
+{% block title %}
+  {{ form.instance.id|yesno:"Sửa phim,Thêm phim mới" }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Breadcrumb -->
+  <nav class="mb-4" aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light p-2 rounded">
+      <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'movie_admin_list' %}">Danh sách phim</a></li>
+      <li class="breadcrumb-item active" aria-current="page">
+        {{ form.instance.id|yesno:"Sửa phim,Thêm phim mới" }}
+      </li>
+    </ol>
+  </nav>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="mb-4 text-primary">{{ form.instance.id|yesno:"Sửa phim,Thêm phim mới" }}</h2>
+
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label fw-bold">{{ field.label }}</label>
+
+              {# 🔹 Nếu là ForeignKey/ManyToMany, thêm input để nhập mới #}
+              {% if field.name in "genres country director actors" %}
+                {{ field|add_class:"form-select" }}
+                <input type="text" name="new_{{ field.name }}" class="form-control mt-1"
+                       placeholder="Nhập mới nếu chưa có">
+              {% else %}
+                {{ field|add_class:"form-control" }}
+              {% endif %}
+
+              {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div class="text-danger small mt-1">
+                  {{ field.errors|striptags }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="col-12 mt-3 d-flex gap-2">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-circle"></i> Lưu
+          </button>
+          <a href="{% url 'movie_admin_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Card & Typography */
+.card h2 {
+  font-weight: 700;
+}
+.card {
+  border-radius: 12px;
+}
+
+/* Input fields */
+input.form-control, select.form-select, textarea.form-control {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input.form-control:focus, select.form-select:focus, textarea.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+}
+
+/* Labels */
+.form-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Buttons */
+.btn-success {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Responsive spacing */
+@media (max-width: 768px) {
+  .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+</style>
+{% endblock %}

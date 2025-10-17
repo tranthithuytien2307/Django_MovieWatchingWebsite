@@ -1,0 +1,16 @@
+<div class="actors">
+  <h3>Diễn viên</h3>
+  <div class="actor-list">
+    {% for actor in movie.actors.all %}
+    <div class="actor-item">
+      <img
+        src="{{ actor.image|default:'/static/no-avatar.png' }}"
+        alt="{{ actor.name }}"
+      />
+      <p>{{ actor.name }}</p>
+    </div>
+    {% empty %}
+    <p>Chưa có thông tin diễn viên.</p>
+    {% endfor %}
+  </div>
+</div>

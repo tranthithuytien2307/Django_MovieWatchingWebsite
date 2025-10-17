@@ -1,0 +1,13 @@
+<div class="recommend">
+  <h3>Phim đề cử</h3>
+  <div class="recommend-list">
+    {% for rec in recommended_movies %}
+    <a href="{% url 'movie_detail' rec.id %}" class="recommend-item">
+      <img src="{{ rec.poster }}" alt="{{ rec.name }}" />
+      <p>{{ rec.name }}</p>
+    </a>
+    {% empty %}
+    <p>Chưa có phim đề cử.</p>
+    {% endfor %}
+  </div>
+</div>

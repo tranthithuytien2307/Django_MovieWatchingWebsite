@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chi tiết User{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'users_list' %}">User</a></li>
+      <li class="breadcrumb-item active">{{ user.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Action buttons -->
+  <div class="mb-3">
+    <a href="{% url 'users_list' %}" class="btn btn-secondary">Quay lại</a>
+    <button class="btn btn-primary">Cập nhật</button>
+    <button class="btn btn-warning text-white">Reset mật khẩu</button>
+  </div>
+
+  <!-- User form -->
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Họ tên</label>
+          <input type="text" class="form-control" name="name" value="{{ user.name }}">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" name="email" value="{{ user.email }}" readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Số điện thoại</label>
+          <input type="text" class="form-control" name="phone" value="{{ user.phone }}">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Role</label>
+          <select class="form-select" name="role">
+            <option value="ADMIN" {% if user.role == "ADMIN" %}selected{% endif %}>ADMIN</option>
+            <option value="USER" {% if user.role == "USER" %}selected{% endif %}>USER</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Avatar</label>
+          <div
+            class="rounded-circle bg-secondary text-white text-center"
+            style="width: 60px; height: 60px; line-height: 60px; font-size: 24px;"
+          >
+            {{ user.name|slice:":1"|upper }}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
