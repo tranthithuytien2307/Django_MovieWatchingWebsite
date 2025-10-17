@@ -1,0 +1,54 @@
+# ==========================
+# Django .gitignore chuẩn
+# ==========================
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Môi trường ảo
+venv/
+.env/
+*.env
+
+# Database (SQLite)
+db.sqlite3
+
+# Static files (sinh ra bởi collectstatic)
+staticfiles/
+
+# Media files (upload của user, không nên push)
+media/
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# MacOS / Windows
+.DS_Store
+Thumbs.db
+
+# Migrations compiled
+*.pyc
+
+# Jupyter / Temp
+.ipynb_checkpoints/
+
+# Byte-compiled / optimized / DLL files
+*.dll
+*.so
+*.dylib
+
+# Backup
+*.bak
+*.tmp
+
+# Other build files
+build/
+dist/
