@@ -189,6 +189,25 @@
             });
           });
       }
+      function filterBy(type, id) {
+        // Tạo URL base là trang chủ (index)
+        let baseUrl = "{% url 'index' %}";
+
+        // Gắn tham số tương ứng vào query string
+        let params = new URLSearchParams(window.location.search);
+
+        // Xóa query cũ nếu có
+        if (type === "genre") {
+          params.delete("country");
+          params.set("genre", id);
+        } else if (type === "country") {
+          params.delete("genre");
+          params.set("country", id);
+        }
+
+        // Điều hướng sang trang lọc
+        window.location.href = `${baseUrl}?${params.toString()}`;
+      }
     </script>
   </head>
   <body>
@@ -213,23 +232,27 @@
       <!-- Menu -->
       <nav class="navbar">
         <ul>
+          <!-- Dropdown thể loại -->
           <li class="dropdown">
             <a href="#">Thể Loại ▼</a>
             <div class="dropdown-content">
-              <div>Hành Động</div>
-              <div>Võ Thuật</div>
-              <div>Tài Liệu</div>
-              <div>BL</div>
-              <!-- thêm các thể loại khác -->
+              {% for genre in genres %}
+              <div onclick="filterBy('genre', '{{ genre.id }}')">{{ genre.name }}</div>
+              {% empty %}
+              <div>Không có dữ liệu</div>
+              {% endfor %}
             </div>
           </li>
+
+          <!-- Dropdown quốc gia -->
           <li class="dropdown">
             <a href="#">Quốc Gia ▼</a>
             <div class="dropdown-content">
-              <div>Việt Nam</div>
-              <div>Hàn Quốc</div>
-              <div>Trung Quốc</div>
-              <!-- thêm các quốc gia khác -->
+              {% for country in countries %}
+              <div onclick="filterBy('country', '{{ country.id }}')">{{ country.name }}</div>
+              {% empty %}
+              <div>Không có dữ liệu</div>
+              {% endfor %}
             </div>
           </li>
         </ul>

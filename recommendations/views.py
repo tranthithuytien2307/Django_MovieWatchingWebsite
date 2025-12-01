@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
+from django.db.models import Q
 import pandas as pd
 import pickle
 import requests
@@ -22,6 +23,15 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from decouple import config
 from .models import Movie, Genre, Country
+from rest_framework import generics, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
+from django.db import models
+
+from .serializers import ReviewSerializer
+from .models import Review, Movie
+
 
 # Lấy API key từ môi trường (hoặc ghi thẳng để test)
 TMDB_API_KEY = os.getenv("TMDB_API_KEY", "YOUR_TMDB_API_KEY")
@@ -260,22 +270,20 @@ def get_movie_info(title):
         print(f"Error fetching movie info: {e}")
     return {"poster": None, "overview": ""}
 
-from django.db.models import Q
-
-from django.db.models import Q
 
 def index(request):
     query = request.GET.get("q", "").strip()
     genre_id = request.GET.get("genre")
     country_id = request.GET.get("country")
     year = request.GET.get("year")
+    movie_type = request.GET.get("type")  # <- thêm dòng này
 
     search_results = None
     error = None
-    movie_sections = None  # mặc định None để phân biệt với giao diện trang chủ
+    movie_sections = None
 
-    # Nếu có query hoặc filter thì search
-    if query or genre_id or country_id or year:
+    # Nếu có query hoặc filter
+    if query or genre_id or country_id or year or movie_type:
         movies = Movie.objects.all()
 
         if query:
@@ -283,14 +291,19 @@ def index(request):
                 Q(name__icontains=query) | Q(description__icontains=query)
             )
 
-        if genre_id:
-            movies = movies.filter(genres__id=genre_id)
+        genre_slug = request.GET.get("genre")  # thay vì genre_id
+        if genre_slug:
+            movies = movies.filter(genres__slug=genre_slug)
+
 
         if country_id:
-            movies = movies.filter(country__id=country_id)
+            movies = movies.filter(country__code=country_id)
 
         if year:
             movies = movies.filter(release_year=year)
+
+        if movie_type:
+            movies = movies.filter(movie_type=movie_type)  # <- sửa lại đúng tên field
 
         search_results = movies.distinct()
 
@@ -303,7 +316,6 @@ def index(request):
             "Phim hot": Movie.objects.order_by("-views")[:10],
         }
 
-    # Trending (top views)
     trending_movies = Movie.objects.order_by("-views")[:5]
 
     context = {
@@ -316,3 +328,65 @@ def index(request):
         "countries": Country.objects.all(),
     }
     return render(request, "recommender/index.html", context)
+
+# ============================
+# Tạo review cho phim
+# ============================
+class CreateReviewAPI(generics.CreateAPIView):
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+# ============================
+# lấy danh sách review theo phim
+#===========================
+class MovieReviewListAPI(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        movie_id = self.kwargs["movie_id"]
+        return Review.objects.filter(movie_id=movie_id).order_by("-created_at")
+
+# ============================
+# Xoá và chỉnh sửa review
+#============================
+
+class ReviewUpdateDeleteAPI(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        review = self.get_object()
+        if review.user != self.request.user:
+            raise PermissionDenied("Bạn không thể sửa review của người khác!")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.user != self.request.user:
+            raise PermissionDenied("Bạn không thể xoá review của người khác!")
+        instance.delete()
+
+# ============================
+# tổng hợp rating
+#==========================
+
+class MovieRatingSummaryAPI(APIView):
+    def get(self, request, movie_id):
+        reviews = Review.objects.filter(movie_id=movie_id)
+        total_reviews = reviews.count()
+
+        if total_reviews == 0:
+            return Response({
+                "average_rating": 0,
+                "total_reviews": 0
+            })
+
+        avg = reviews.aggregate(models.Avg("rating"))["rating__avg"]
+
+        return Response({
+            "average_rating": round(avg, 2),
+            "total_reviews": total_reviews
+        })

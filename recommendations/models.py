@@ -69,6 +69,12 @@ class UserToken(models.Model):
 class Genre(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=False, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -79,6 +85,7 @@ class Genre(models.Model):
 # ========================
 class Country(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -167,13 +174,13 @@ class Episode(models.Model):
 class Review(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reviews")
-    reviewer = models.CharField(max_length=100)  # tên người review
-    rating = models.IntegerField()  # điểm đánh giá
+    user = models.ForeignKey(AppUser, on_delete=models.CASCADE, related_name="reviews", null=True, blank=True)
+    rating = models.IntegerField()  # 1 → 5
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.reviewer} - {self.movie.name}"
+        return f"{self.user.email} - {self.movie.name}"
 
 
 # ========================

@@ -27,6 +27,10 @@
         gap: 15px; padding: 20px; 
         flex-wrap: wrap; 
       }
+      .categories a{
+        text-decoration: none;
+        color: inherit;
+      }
       .cat { 
         background: linear-gradient(45deg, #444, #888); 
         padding: 15px 25px; 
@@ -105,13 +109,8 @@
         <option value="{{ c.id }}" {% if request.GET.country == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
       </select>
-      <select name="year">
-        <option value="">Năm</option>
-        {% for y in years %}
-        <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
-      </select>
       <button type="submit">Lọc</button>
+      <a href="/" style=" padding: 8px 12px; border-radius: 6px; background: #555; color: white; text-decoration: none; transition: 0.3s;"> Bỏ lọc</a>
     </form>
   </div>
 
@@ -167,14 +166,18 @@
   {% else %}
   <!-- ========== Giao diện mặc định trang chủ ========== -->
   <div class="categories">
-    <div class="cat">Phim Mới</div>
-    <div class="cat">Phim Bộ</div>
-    <div class="cat">Phim Lẻ</div>
-    <div class="cat">Hàn Quốc</div>
-    <div class="cat">Trung Quốc</div>
-    <div class="cat">Cổ Trang</div>
-    <div class="cat">Tình Cảm</div>
+    <a class="cat" href="/?type=single">Phim Lẻ</a>
+    <a class="cat" href="/?type=series">Phim Bộ</a>
+    <a class="cat" href="/?sort=new">Phim Mới</a>
+    <a class="cat" href="/?country=VN">Việt Nam</a>
+    <a class="cat" href="/?country=KR">Hàn Quốc</a>
+    <a class="cat" href="/?country=CN">Trung Quốc</a>
+    <a class="cat" href="/?genre=tinh-cam">Tình Cảm</a>
+    <a class="cat" href="/?genre=co-trang">Cổ Trang</a>
   </div>
+
+
+
 
   <div id="movie-sections">
     {% for category, movies in movie_sections.items %}
