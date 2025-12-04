@@ -1,27 +1,54 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Movie, Director, Episode, Country
 from .forms import MovieForm
-from .models import AppUser, Genre
+from .models import AppUser, Genre, Actor, Country, Review
 from .forms import DirectorForm
+from .forms import ActorForm
 from urllib.parse import urlparse, parse_qs
 from django.core.paginator import Paginator
+from django.db.models import Q
+from django.contrib import messages
+import calendar
+from django.shortcuts import render
+from .models import Movie
 
-# Trang dashboard admin
 def admin_dashboard(request):
-    stats = {
-        "orders": 0,
-        "movies": 0,
-        "users": {"new": 0, "total": 27},
-        "posts": {"new": 0, "total": 84},
-    }
-    revenue = [4000000, 3200000, 1000000]  # dữ liệu biểu đồ
-    labels = ["Tháng 12/2023", "Tháng 1/2024", "Tháng 2/2024"]
+    # Top 5 phim có lượt xem nhiều nhất
+    top_movies = Movie.objects.order_by('-views')[:5]
 
-    return render(request, "recommender/admin_dashboard.html", {
-        "stats": stats,
-        "revenue": revenue,
-        "labels": labels
-    })
+    labels = [movie.name for movie in top_movies]
+    views = [movie.views for movie in top_movies]
+
+    # Các thống kê cơ bản
+    stats = {
+        'movies': Movie.objects.count(),
+        'users': {'total': AppUser.objects.count()},
+        'actors': Actor.objects.count(),
+        'directors': Director.objects.count(),
+        'genres': Genre.objects.count(),
+        'countries': Country.objects.count(),
+        'reviews': Review.objects.count(), 
+    }
+
+    # Tạo list card để loop trong template
+    cards = [
+        {'value': stats['movies'], 'icon': 'fa-film', 'label': 'Tổng số phim', 'bg': 'linear-gradient(135deg,#3498db,#2980b9)', 'url': 'movie_admin_list'},
+        {'value': stats['users']['total'], 'icon': 'fa-users', 'label': 'Người dùng', 'bg': 'linear-gradient(135deg,#8e44ad,#71368a)', 'url': 'users_list'},
+        {'value': stats['actors'], 'icon': 'fa-person', 'label': 'Diễn viên', 'bg': 'linear-gradient(135deg,#27ae60,#1e8449)', 'url': 'actor_list'},
+        {'value': stats['directors'], 'icon': 'fa-video', 'label': 'Đạo diễn', 'bg': 'linear-gradient(135deg,#c0392b,#992d22)', 'url': 'director_admin_list'},
+        {'value': stats.get('genres', 0), 'icon': 'fa-tags', 'label': 'Thể loại', 'bg': 'linear-gradient(135deg,#f39c12,#d68910)', 'url': 'genre_country_admin'},
+        {'value': stats.get('countries', 0), 'icon': 'fa-globe', 'label': 'Quốc gia', 'bg': 'linear-gradient(135deg,#16a085,#138d75)', 'url': 'genre_country_admin'},
+        {'value': stats['reviews'], 'icon': 'fa-comments', 'label': 'Review', 'bg': 'linear-gradient(135deg,#e67e22,#d35400)', 'url': 'review_admin_list'},
+    ]
+
+    context = {
+        'stats': stats,
+        'labels': labels,
+        'views': views,
+        'cards': cards,
+    }
+
+    return render(request, 'recommender/admin_dashboard.html', context)
 
 # Trang user
 def users_list(request):
@@ -31,15 +58,128 @@ def users_list(request):
 def user_detail(request, pk):
     user = get_object_or_404(AppUser, pk=pk)
     return render(request, "recommender/admin/user_detail.html", {"user": user})
+def user_edit(request, pk):
+    user = get_object_or_404(AppUser, pk=pk)
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        role = request.POST.get("role")
+        avatar = request.POST.get("avatar")
+
+        # Kiểm tra email trùng (ngoại trừ chính user này)
+        if AppUser.objects.exclude(pk=user.pk).filter(email=email).exists():
+            messages.error(request, "Email đã tồn tại!")
+            return redirect("user_edit", pk=pk)
+
+        # Kiểm tra phone trùng
+        if AppUser.objects.exclude(pk=user.pk).filter(phone=phone).exists():
+            messages.error(request, "Số điện thoại đã tồn tại!")
+            return redirect("user_edit", pk=pk)
+
+        # Cập nhật dữ liệu
+        user.name = name
+        user.email = email
+        user.phone = phone
+        user.role = role
+        user.avatar = avatar
+        user.save()
+
+        messages.success(request, "Cập nhật user thành công!")
+        return redirect("user_detail", pk=pk)
+
+    return render(request, "recommender/admin/user_edit.html", {"user": user})
+
+def user_change_password(request, pk):
+    user = get_object_or_404(AppUser, pk=pk)
+
+    if request.method == "POST":
+        step = request.POST.get("step")
+
+        # ----- BƯỚC 1: XÁC MINH MẬT KHẨU HIỆN TẠI -----
+        if step == "verify":
+            current_password = request.POST.get("current_password")
+
+            if not user.check_password(current_password):
+                messages.error(request, "Mật khẩu hiện tại không đúng!")
+                return redirect("user_change_password", pk=pk)
+
+            # Nếu đúng → render sang form nhập mật khẩu mới
+            return render(request, "recommender/admin/user_change_password_step2.html", {"user": user})
+
+        # ----- BƯỚC 2: ĐỔI MẬT KHẨU -----
+        elif step == "change":
+            password = request.POST.get("password")
+            confirm = request.POST.get("confirm")
+
+            if password != confirm:
+                messages.error(request, "Mật khẩu xác nhận không khớp!")
+                return redirect("user_change_password", pk=pk)
+
+            if len(password) < 6:
+                messages.error(request, "Mật khẩu phải ít nhất 6 ký tự!")
+                return redirect("user_change_password", pk=pk)
+
+            user.set_password(password)
+            user.save()
+
+            messages.success(request, "Đổi mật khẩu thành công!")
+            return redirect("user_detail", pk=pk)
+
+    # MẶC ĐỊNH HIỂN THỊ BƯỚC 1
+    return render(request, "recommender/admin/user_change_password.html", {"user": user})
+
+def user_create(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        role = request.POST.get("role")
+
+        AppUser.objects.create(
+            name=name,
+            email=email,
+            phone=phone,
+            role=role,
+            status=True
+        )
+
+        messages.success(request, "Tạo user thành công!")
+        return redirect("users_list")
+
+    return render(request, "recommender/admin/user_create.html")
+
+
+def user_toggle_status(request, pk):
+    user = get_object_or_404(AppUser, pk=pk)
+    user.status = not user.status
+    user.save()
+    return redirect("user_detail", pk=pk)
+
 
 def movie_admin_list(request):
-    movie_list = Movie.objects.all().order_by('-id')  # mới nhất lên trước
-    paginator = Paginator(movie_list, 10)  # 10 phim / trang
+    search_query = request.GET.get('search', '').strip()  # Lấy query search
 
+    # Lọc movie theo search (tên phim)
+    if search_query:
+        movie_list = Movie.objects.filter(
+            Q(name__icontains=search_query)
+        ).order_by('-id')
+    else:
+        movie_list = Movie.objects.all().order_by('-id')
+
+    # Phân trang: 12 phim / trang
+    paginator = Paginator(movie_list, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "recommender/movie_admin_list.html", {"page_obj": page_obj})
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,  # để giữ value search trên input
+    }
+    return render(request, "recommender/movie_admin_list.html", context)
+
 
 def watch_episode(request, movie_id, episode_id):
     movie = get_object_or_404(Movie, id=movie_id)
@@ -206,13 +346,27 @@ def movie_delete(request, pk):
         movie.delete()
         return redirect("movie_admin_list")
     return render(request, "recommender/movie_confirm_delete.html", {"movie": movie})
+
+
 #Danh sách đạo diễn
 def director_admin_list(request):
+    search_query = request.GET.get("search", "")
+
     directors_list = Director.objects.all().order_by("name")
-    paginator = Paginator(directors_list, 10)  # 10 đạo diễn / trang
-    page_number = request.GET.get('page')
+
+    # Search
+    if search_query:
+        directors_list = directors_list.filter(name__icontains=search_query)
+
+    # Pagination
+    paginator = Paginator(directors_list, 10)
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    return render(request, "recommender/directors/director_admin_list.html", {"page_obj": page_obj})
+
+    return render(request, "recommender/directors/director_admin_list.html", {
+        "page_obj": page_obj,
+        "search_query": search_query,
+    })
 
 
 def director_admin_create(request):
@@ -256,3 +410,143 @@ def director_admin_delete(request, pk):
         director.delete()
         return redirect("director_admin_list")
     return render(request, "recommender/directors/director_admin_confirm_delete.html", {"director": director})
+
+def actor_list(request):
+    query = request.GET.get("search", "")
+    actors = Actor.objects.all().order_by("name")
+
+    if query:
+        actors = actors.filter(
+            Q(name__icontains=query)
+        )
+
+    paginator = Paginator(actors, 12)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "recommender/actors/actor_list.html", {
+        "page_obj": page_obj,
+        "query": query
+    })
+
+def actor_detail(request, actor_id):
+    actor = get_object_or_404(Actor, id=actor_id)
+    movies = actor.movies.all()    # ManyToMany → danh sách phim tham gia
+
+    return render(request, "recommender/actors/actor_detail.html", {
+        "actor": actor,
+        "movies": movies
+    })
+def actor_create(request):
+    if request.method == "POST":
+        form = ActorForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã thêm diễn viên thành công!")
+            return redirect("actor_list")
+    else:
+        form = ActorForm()
+
+    return render(request, "recommender/actors/actor_form.html", {
+        "form": form,
+        "title": "Thêm diễn viên"
+    })
+
+# -----------------------------------
+# Edit
+# -----------------------------------
+def actor_edit(request, actor_id):
+    actor = get_object_or_404(Actor, id=actor_id)
+    if request.method == "POST":
+        form = ActorForm(request.POST, instance=actor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Cập nhật diễn viên thành công!")
+            return redirect("actor_detail", actor_id=actor.id)
+    else:
+        form = ActorForm(instance=actor)
+
+    return render(request, "recommender/actors/actor_form.html", {
+        "form": form,
+        "title": "Chỉnh sửa diễn viên"
+    })
+
+# -----------------------------------
+# Delete
+# -----------------------------------
+def actor_delete(request, actor_id):
+    actor = get_object_or_404(Actor, id=actor_id)
+
+    if request.method == "POST":
+        actor.delete()
+        messages.success(request, "Đã xóa diễn viên!")
+        return redirect("actor_list")
+
+    return render(request, "recommender/actors/actor_delete_confirm.html", {
+        "actor": actor
+    })
+
+
+def genre_country_admin(request):
+    genres = Genre.objects.all().order_by("name")
+    countries = Country.objects.all().order_by("name")
+
+    return render(request, "recommender/admin/genre_country.html", {
+        "genres": genres,
+        "countries": countries
+    })
+def genre_add(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        Genre.objects.create(name=name)
+    return redirect("genre_country_admin")
+def country_add(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        code = request.POST.get("code")
+        Country.objects.create(name=name, code=code)
+    return redirect("genre_country_admin")
+def genre_delete(request, id):
+    genre = get_object_or_404(Genre, id=id)
+    genre.delete()
+    return redirect("genre_country_admin")
+
+def country_delete(request, id):
+    country = get_object_or_404(Country, id=id)
+    country.delete()
+    return redirect("genre_country_admin")
+def genre_edit(request, id):
+    genre = get_object_or_404(Genre, id=id)
+    if request.method == "POST":
+        genre.name = request.POST.get("name")
+        genre.save()
+        return redirect("genre_country_admin")
+    return render(request, "recommender/admin/genre_edit.html", {"genre": genre})
+
+def country_edit(request, id):
+    country = get_object_or_404(Country, id=id)
+    if request.method == "POST":
+        country.name = request.POST.get("name")
+        country.code = request.POST.get("code")
+        country.save()
+        return redirect("genre_country_admin")
+    return render(request, "recommender/admin/country_edit.html", {"country": country})
+
+
+def review_admin_list(request):
+    query = request.GET.get('search', '')  # Lấy từ khóa search từ input
+    movies = Movie.objects.prefetch_related('reviews').all()
+    
+    if query:
+        movies = movies.filter(name__icontains=query)  # Lọc phim theo tên
+
+    context = {
+        'movies_with_reviews': movies,
+        'query': query,
+    }
+    return render(request, 'recommender/review/admin_review_list.html', context)
+
+def review_delete(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.delete()
+    return redirect('review_admin_list')

@@ -49,8 +49,53 @@ REDIRECT_URI = "http://localhost:8000/auth/google/callback/"
 def index(request):
     return render(request, "recommender/index.html")  
 
+def login_page(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        user = authenticate(request, username=email, password=password)
+
+        if user:
+            login(request, user)
+
+            # Sinh JWT
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            # Lưu token DB
+            UserToken.objects.create(
+                user=user,
+                access_token=access_token,
+                refresh_token=refresh_token,
+                access_expires_at=datetime.now() + timedelta(minutes=15),
+                refresh_expires_at=datetime.now() + timedelta(days=7),
+            )
+
+            # Kiểm tra admin
+            admin_emails = ["admin@gmail.com"]
+            is_admin = user.email in admin_emails or user.is_superuser
+
+            return JsonResponse({
+                "success": True,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "is_admin": is_admin,
+                "user": {
+                    "email": user.email,
+                    "name": user.name,
+                    "avatar": user.avatar
+                },
+                "index_url": "/"
+            })
+        else:
+            return JsonResponse({"success": False, "error": "Email hoặc mật khẩu không đúng"}, status=400)
+
+    return render(request, "recommender/login.html")
+
+
+# === GOOGLE LOGIN REDIRECT ===
 def google_login(request):
-    """Redirect sang Google để login"""
     google_auth_url = (
         "https://accounts.google.com/o/oauth2/v2/auth"
         "?response_type=code"
@@ -63,13 +108,13 @@ def google_login(request):
     return redirect(google_auth_url)
 
 
+# === GOOGLE CALLBACK ===
 def google_callback(request):
-    """Xử lý code từ Google, tạo user + phát JWT"""
     code = request.GET.get("code")
     if not code:
-        return JsonResponse({"error": "No code provided"}, status=400)
+        return JsonResponse({"success": False, "error": "No code provided"}, status=400)
 
-    # Đổi code sang access_token từ Google
+    # Lấy access token từ Google
     token_url = "https://oauth2.googleapis.com/token"
     token_data = {
         "code": code,
@@ -80,93 +125,79 @@ def google_callback(request):
     }
     r = requests.post(token_url, data=token_data)
     token_json = r.json()
-
     if "error" in token_json:
-        return JsonResponse({"error": token_json}, status=400)
+        return JsonResponse({"success": False, "error": token_json}, status=400)
 
     google_access_token = token_json.get("access_token")
     google_refresh_token = token_json.get("refresh_token")
     expires_in = token_json.get("expires_in", 3600)
 
-    # Lấy thông tin user từ Google
+    # Lấy info user Google
     user_info = requests.get(
         "https://www.googleapis.com/oauth2/v2/userinfo",
-        headers={"Authorization": f"Bearer {google_access_token}"},
+        headers={"Authorization": f"Bearer {google_access_token}"}
     ).json()
 
     email = user_info.get("email")
     name = user_info.get("name")
-    picture = user_info.get("picture")
+    avatar = user_info.get("picture")
 
     # Tạo hoặc lấy user
     user, created = AppUser.objects.get_or_create(
         email=email,
-        defaults={
-            "name": name,
-            "avatar": picture,
-            "phone": str(uuid.uuid4())[:10],  # tạm tạo số điện thoại random
-        },
+        defaults={"name": name, "avatar": avatar, "phone": str(uuid.uuid4())[:10]}
     )
 
-    # Lưu Google token vào bảng UserToken
-    UserToken.objects.create(
-        user=user,
-        access_token=google_access_token,
-        refresh_token=google_refresh_token,
-        access_expires_at=datetime.now() + timedelta(seconds=expires_in),
-    )
-
-    # Tạo JWT (access + refresh)
+    # Sinh JWT
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
 
-    request.session['user'] = {
-        'email': user.email,
-        'name': user.name,
-        'avatar': user.avatar
+    # Lưu DB
+    UserToken.objects.create(
+        user=user,
+        access_token=access_token,
+        refresh_token=refresh_token,
+        access_expires_at=datetime.now() + timedelta(minutes=15),
+        refresh_expires_at=datetime.now() + timedelta(days=7),
+    )
+
+    is_admin = user.is_superuser or user.email in ["admin@gmail.com"]
+
+    # Render trang trung gian JS để lưu localStorage
+    context = {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "is_admin": is_admin,
+        "user": {
+            "email": user.email,
+            "name": user.name,
+            "avatar": user.avatar
+        },
+        "index_url": "/"
     }
-    request.session['google_access_token'] = google_access_token
-    request.session['google_refresh_token'] = google_refresh_token
+    return render(request, "recommender/google_redirect.html", context)
 
-    return redirect('index')
 
+# === REFRESH JWT ===
 @api_view(["POST"])
 def refresh_jwt(request):
-    """
-    Nhận refresh token từ client, trả về access token mới.
-    """
     refresh_token = request.data.get("refresh_token")
     if not refresh_token:
         return Response({"error": "Missing refresh_token"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Tạo đối tượng RefreshToken từ token client gửi lên
+        # Tạo đối tượng refresh token
         refresh = RefreshToken(refresh_token)
 
         # Sinh access token mới
         new_access_token = str(refresh.access_token)
-
         return Response({
             "access_token": new_access_token,
-            "expires_in": 15 * 60,  # 15 phút
+            "expires_in": 15 * 60
         })
-
     except TokenError:
-        # Token không hợp lệ hoặc đã hết hạn
         return Response({"error": "Invalid or expired refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
-
-def login_page(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        user = authenticate(request, username=email, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect("admin_dashboard")  # đăng nhập thành công -> về trang index
-        else:
-            return render(request, "recommender/login.html", {"error": "Email hoặc mật khẩu không đúng"})
-    return render(request, "recommender/login.html")
 
 # ===== Tìm phim theo query =====
 def search_movie(request):
@@ -337,7 +368,12 @@ class CreateReviewAPI(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(
+            user=self.request.user,
+            movie=serializer.validated_data["movie"]
+        )
+
+
 
 # ============================
 # lấy danh sách review theo phim
@@ -390,3 +426,6 @@ class MovieRatingSummaryAPI(APIView):
             "average_rating": round(avg, 2),
             "total_reviews": total_reviews
         })
+def logout_view(request):
+    request.session.flush()  # Xóa toàn bộ session
+    return redirect('index')  # Quay về trang chủ
