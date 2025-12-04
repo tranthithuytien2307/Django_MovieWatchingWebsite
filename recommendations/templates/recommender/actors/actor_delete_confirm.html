@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Xóa diễn viên{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <nav class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'actor_list' %}">Diễn viên</a></li>
+      <li class="breadcrumb-item active">Xóa</li>
+    </ol>
+  </nav>
+
+  <div class="card shadow-sm">
+    <div class="card-header"><h5 class="mb-0">Xác nhận xóa</h5></div>
+
+    <div class="card-body">
+      <p>Bạn có chắc muốn xóa diễn viên: <strong>{{ actor.name }}</strong>?</p>
+
+      <form method="POST">
+        {% csrf_token %}
+        <button class="btn btn-danger">
+          <i class="bi bi-trash"></i> Xóa
+        </button>
+        <a href="{% url 'actor_detail' actor.id %}" class="btn btn-secondary ms-2">Hủy</a>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

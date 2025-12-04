@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <!-- Chèn dữ liệu JSON an toàn -->
+    {{ user|json_script:"user-data" }}
+    {{ access_token|json_script:"access-token" }}
+    {{ refresh_token|json_script:"refresh-token" }}
+    {{ is_admin|json_script:"is-admin" }}
+    {{ index_url|json_script:"index-url" }}
+
+    <script>
+      const data = {
+        user: JSON.parse(document.getElementById("user-data").textContent),
+        access_token: JSON.parse(
+          document.getElementById("access-token").textContent
+        ),
+        refresh_token: JSON.parse(
+          document.getElementById("refresh-token").textContent
+        ),
+        is_admin: JSON.parse(document.getElementById("is-admin").textContent),
+        index_url: JSON.parse(document.getElementById("index-url").textContent),
+      };
+
+      console.log("Google login data:", data);
+
+      // Lưu vào localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      localStorage.setItem("is_admin", data.is_admin);
+
+      // Chuyển hướng
+      if (data.is_admin) {
+        window.location.href = "/admin/";
+      } else {
+        window.location.href = data.index_url;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block title %}Danh sách diễn viên{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <ol class="breadcrumb bg-white shadow-sm px-3 py-2 rounded">
+      <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Dashboard</a></li>
+      <li class="breadcrumb-item active">Danh sách diễn viên</li>
+    </ol>
+  </nav>
+
+  <!-- Button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Hai nút -->
+    <div class="d-flex" style="gap: 10px;">
+      <a href="{% url 'actor_create' %}" class="btn btn-success">
+        <i class="fa-solid fa-plus"></i> Thêm mới
+      </a>
+
+      <a href="{% url 'actor_list' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-rotate-right"></i> Làm mới
+      </a>
+    </div>
+
+    <!-- Thanh tìm kiếm -->
+    <form method="get" class="d-flex align-items-center" style="gap: 10px;">
+      <input
+        type="text"
+        name="search"
+        value="{{ request.GET.search }}"
+        placeholder="Tìm kiếm diễn viên..."
+        class="form-control"
+        style="width: 260px;"
+      />
+      <button class="btn btn-primary">
+        <i class="fa fa-search"></i>
+      </button>
+    </form>
+
+  </div>
+
+  <!-- Actor Cards -->
+  <div class="row g-3">
+    {% if page_obj %}
+      {% for actor in page_obj %}
+
+        <div class="col-md-4 col-lg-3">
+          <div class="card actor-card shadow-sm position-relative">
+
+            <!-- Action buttons -->
+            <div class="actor-actions">
+              <a href="{% url 'actor_detail' actor.id %}" class="btn-action info"><i class="fa-solid fa-eye"></i></a>
+              <a href="{% url 'actor_edit' actor.id %}" class="btn-action edit"><i class="fa-solid fa-pen"></i></a>
+              <a href="{% url 'actor_delete' actor.id %}" class="btn-action delete"><i class="fa-solid fa-trash"></i></a>
+            </div>
+
+            {% if actor.image %}
+              <img src="{{ actor.image }}" class="actor-img" alt="{{ actor.name }}">
+            {% else %}
+              <div class="actor-img d-flex align-items-center justify-content-center">
+                <i class="fa-solid fa-user fa-2x"></i>
+              </div>
+            {% endif %}
+
+            <div class="card-body text-center">
+              <h5 class="card-title">{{ actor.name }}</h5>
+
+              <p class="mb-0">
+                {% if actor.birthday %}
+                  {{ actor.birthday|date:"d/m/Y" }}
+                {% else %}
+                  Chưa rõ ngày sinh
+                {% endif %}
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+
+      {% endfor %}
+    {% else %}
+      <div class="col-12 text-center text-muted">Chưa có diễn viên nào</div>
+    {% endif %}
+  </div>
+
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fa-solid fa-angle-left"></i></a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-angle-left"></i></span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fa-solid fa-angle-right"></i></a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-angle-right"></i></span></li>
+      {% endif %}
+
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+
+<style>
+  /* Nút */
+  .btn-success {
+    background: #4f46e5 !important; /* Indigo */
+    border: none;
+  }
+  .btn-success:hover {
+    background: #4338ca !important;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+  }
+  .btn-secondary:hover {
+    background: #d1d5db;
+  }
+
+  .btn-primary {
+    background: #6366f1;
+    border: none;
+  }
+  .btn-primary:hover {
+    background: #4f46e5;
+  }
+
+  /* THANH TÌM KIẾM */
+  input.form-control {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #fafafa;
+  }
+  input.form-control:focus {
+    box-shadow: 0 0 8px rgba(99,102,241,0.3);
+    border-color: #6366f1;
+  }
+
+  /* CARD DIỄN VIÊN */
+  .actor-card {
+    transition: 0.25s ease;
+    cursor: pointer;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: white;
+  }
+
+  .actor-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+  }
+
+  .actor-img {
+    height: 160px;
+    object-fit: cover;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .actor-card .card-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .actor-card p {
+    color: #6b7280;
+  }
+
+  /* Pagination */
+  .pagination .page-link {
+    border-radius: 10px !important;
+    margin: 0 4px;
+    border: none;
+    padding: 8px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    background: white;
+    color: #4f46e5;
+  }
+
+  .pagination .page-item.active .page-link {
+    background: #4f46e5 !important;
+    color: white !important;
+  }
+
+  .pagination .page-link:hover {
+    background: #eef2ff;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb;
+  }
+  .breadcrumb a {
+    color: #4f46e5;
+  }
+  /* ================= ACTION BUTTONS ON CARD ================= */
+.actor-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.actor-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: 0.25s ease;
+  z-index: 10;
+}
+
+.actor-card:hover .actor-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-action {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: #4f46e5;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: 0.25s;
+}
+
+.btn-action:hover {
+  transform: scale(1.1);
+}
+
+/* Icon màu theo loại */
+.btn-action.info {
+  color: #0ea5e9;
+}
+.btn-action.edit {
+  color: #6366f1;
+}
+.btn-action.delete {
+  color: #ef4444;
+}
+.btn-action.delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+</style>
+
+{% endblock %}

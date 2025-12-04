@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Quản lý Review{% endblock %}
+
+{% block content %}
+<h3 class="mb-4 text-primary"><i class="fa-solid fa-comments"></i> Quản lý Review</h3>
+
+<!-- Form search -->
+<form method="get" class="mb-3 d-flex align-items-center" style="max-width:500px; gap:5px;">
+  <input type="text" class="form-control" name="search" placeholder="Tìm phim..." value="{{ query }}">
+  <button class="btn btn-primary" type="submit">Search</button>
+  <a href="{% url 'review_admin_list' %}" class="btn btn-secondary" style="white-space:nowrap ;"><i class="fa-solid fa-rotate-right"></i> Làm mới</a>
+</form>
+
+<div class="accordion" id="accordionReviews">
+  {% for movie in movies_with_reviews %}
+    {% if movie.reviews.exists %}
+      <div class="accordion-item mb-3 shadow-sm" style="border-radius:15px; border:1px solid #ddd;">
+        <h2 class="accordion-header" id="heading{{ movie.id }}">
+          <button class="accordion-button collapsed d-flex align-items-center" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#collapse{{ movie.id }}"
+                  aria-expanded="false" aria-controls="collapse{{ movie.id }}">
+            <span class="me-2" id="icon{{ movie.id }}">&#9654;</span> <!-- → -->
+            {{ movie.name }} ({{ movie.reviews.count }} reviews)
+          </button>
+        </h2>
+        <div id="collapse{{ movie.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ movie.id }}">
+          <div class="accordion-body p-0">
+            <table class="table table-striped mb-0 text-nowrap">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th style="width:200px;">Người dùng</th>
+                  <th style="width:80px;">Rating</th>
+                  <th style="width:300px;">Nội dung</th>
+                  <th style="width:160px;">Ngày tạo</th>
+                  <th style="width:80px;">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for review in movie.reviews.all %}
+                <tr style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#reviewModal{{ review.id }}">
+                  <td>{{ forloop.counter }}</td>
+                  <td>{% if review.user %}{{ review.user.email }}{% else %}Khách{% endif %}</td>
+                  <td>{{ review.rating }}/5</td>
+                  <td>{{ review.content|truncatechars:50 }}</td>
+                  <td>{{ review.created_at|date:"d/m/Y H:i" }}</td>
+                  <td>
+                    <a href="{% url 'review_delete' review.id %}" class="btn btn-sm btn-danger"
+                       onclick="event.stopPropagation(); return confirm('Bạn có chắc muốn xóa review này?');">
+                      Xóa
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Modal chi tiết review -->
+                <div class="modal fade" id="reviewModal{{ review.id }}" tabindex="-1" aria-labelledby="reviewModalLabel{{ review.id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="reviewModalLabel{{ review.id }}">
+                          Review của {% if review.user %}{{ review.user.email }}{% else %}Khách{% endif %}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p><strong>Movie:</strong> {{ movie.name }}</p>
+                        <p><strong>Rating:</strong> {{ review.rating }}/5</p>
+                        <p><strong>Nội dung:</strong></p>
+                        <p>{{ review.content }}</p>
+                        <p><strong>Ngày tạo:</strong> {{ review.created_at|date:"d/m/Y H:i" }}</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.accordion-collapse').forEach(collapseEl => {
+    collapseEl.addEventListener('show.bs.collapse', function () {
+      const btn = document.querySelector(`[data-bs-target="#${collapseEl.id}"] span`);
+      if(btn) btn.innerHTML = '&#9660;'; // ↓ khi mở
+    });
+    collapseEl.addEventListener('hide.bs.collapse', function () {
+      const btn = document.querySelector(`[data-bs-target="#${collapseEl.id}"] span`);
+      if(btn) btn.innerHTML = '&#9654;'; // → khi đóng
+    });
+  });
+});
+</script>
+
+<style>
+  .btn-secondary { background: #e5e7eb; color: #374151; }
+</style>
+
+{% endblock %}

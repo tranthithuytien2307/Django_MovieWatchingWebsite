@@ -1,65 +1,244 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Chi tiết User{% endblock %}
-
+{% extends "base.html" %} {% block title %}Chi tiết User{% endblock %} 
 {% block content %}
 <div class="container-fluid">
   <!-- Breadcrumb -->
   <nav class="mb-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'users_list' %}">User</a></li>
-      <li class="breadcrumb-item active">{{ user.name }}</li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'users_list' %}">Danh sách user</a>
+      </li>
+      <li class="breadcrumb-item active">Chi tiết user</li>
     </ol>
   </nav>
 
-  <!-- Action buttons -->
-  <div class="mb-3">
-    <a href="{% url 'users_list' %}" class="btn btn-secondary">Quay lại</a>
-    <button class="btn btn-primary">Cập nhật</button>
-    <button class="btn btn-warning text-white">Reset mật khẩu</button>
-  </div>
+  <!-- User Detail Card -->
+  <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+    <div
+      class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
+    >
+      <h5 class="mb-0 fw-semibold">Thông tin người dùng</h5>
 
-  <!-- User form -->
-  <div class="card">
-    <div class="card-body">
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label">Họ tên</label>
-          <input type="text" class="form-control" name="name" value="{{ user.name }}">
-        </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'users_list' %}" class="btn btn-back btn-sm btn-action">
+          <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
 
-        <div class="mb-3">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" name="email" value="{{ user.email }}" readonly>
-        </div>
+        <a
+          href="{% url 'user_edit' user.id %}"
+          class="btn btn-edit btn-sm btn-action"
+        >
+          <i class="bi bi-pencil-square me-1"></i> Cập nhật
+        </a>
 
-        <div class="mb-3">
-          <label class="form-label">Số điện thoại</label>
-          <input type="text" class="form-control" name="phone" value="{{ user.phone }}">
-        </div>
+        <a
+          href="{% url 'user_change_password' user.id %}"
+          class="btn btn-password btn-sm btn-action"
+        >
+          <i class="bi bi-key me-1"></i> Đổi mật khẩu
+        </a>
 
-        <div class="mb-3">
-          <label class="form-label">Role</label>
-          <select class="form-select" name="role">
-            <option value="ADMIN" {% if user.role == "ADMIN" %}selected{% endif %}>ADMIN</option>
-            <option value="USER" {% if user.role == "USER" %}selected{% endif %}>USER</option>
-          </select>
-        </div>
+        {% if user.status %}
+        <a
+          href="{% url 'user_toggle_status' user.id %}"
+          class="btn btn-disable btn-sm btn-action"
+        >
+          <i class="bi bi-person-x me-1"></i> Vô hiệu hóa
+        </a>
+        {% else %}
+        <a
+          href="{% url 'user_toggle_status' user.id %}"
+          class="btn btn-enable btn-sm btn-action"
+        >
+          <i class="bi bi-person-check me-1"></i> Kích hoạt
+        </a>
+        {% endif %}
+      </div>
+    </div>
 
-        <div class="mb-3">
-          <label class="form-label">Avatar</label>
-          <div
-            class="rounded-circle bg-secondary text-white text-center"
-            style="width: 60px; height: 60px; line-height: 60px; font-size: 24px;"
-          >
+    <div class="card-body p-4">
+      <div class="row">
+        <!-- Avatar -->
+        <div class="col-md-3 text-center mb-3">
+          {% if user.avatar %}
+          <img src="{{ user.avatar }}" class="avatar-detail shadow-sm" />
+          {% else %}
+          <div class="avatar-placeholder-detail shadow-sm">
             {{ user.name|slice:":1"|upper }}
           </div>
+          {% endif %}
         </div>
-      </form>
+
+        <!-- Table Info -->
+        <div class="col-md-9">
+          <table class="table table-borderless detail-table">
+            <tr>
+              <th>Họ tên</th>
+              <td>{{ user.name }}</td>
+            </tr>
+
+            <tr>
+              <th>Email</th>
+              <td>{{ user.email }}</td>
+            </tr>
+
+            <tr>
+              <th>Số điện thoại</th>
+              <td>{{ user.phone }}</td>
+            </tr>
+
+            <tr>
+              <th>Role</th>
+              <td>
+                {% if user.role == "admin" %}
+                <span class="badge role-admin">Admin</span>
+                {% elif user.role == "staff" %}
+                <span class="badge role-staff">Staff</span>
+                {% else %}
+                <span class="badge role-customer">Customer</span>
+                {% endif %}
+              </td>
+            </tr>
+
+            <tr>
+              <th>Trạng thái</th>
+              <td>
+                {% if user.status %}
+                <span class="badge status-active">Đang hoạt động</span>
+                {% else %}
+                <span class="badge status-disable">Đã vô hiệu hóa</span>
+                {% endif %}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<style>
+  /* Avatar */
+  .avatar-detail {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .avatar-placeholder-detail {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    font-size: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Nút chung */
+  .btn-action {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 500;
+    transition: 0.2s;
+    border: none;
+  }
+
+  /* Hover nâng nhẹ */
+  .btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  /* 🎨 1. Nút Cập nhật – xanh lam pastel */
+  .btn-edit {
+    background: #d9e7ff;
+    color: #0b3e91;
+  }
+  .btn-edit:hover {
+    background: #c7dbff;
+  }
+
+  /* 🎨 2. Đổi mật khẩu – cam pastel */
+  .btn-password {
+    background: #ffe6c7;
+    color: #a75700;
+  }
+  .btn-password:hover {
+    background: #ffdbb1;
+  }
+
+  /* 🎨 3a. Vô hiệu hóa – đỏ pastel */
+  .btn-disable {
+    background: #ffd6d9;
+    color: #a31422;
+  }
+  .btn-disable:hover {
+    background: #ffc6cc;
+  }
+
+  /* 🎨 3b. Kích hoạt – xanh pastel */
+  .btn-enable {
+    background: #d8f4dc;
+    color: #146b27;
+  }
+  .btn-enable:hover {
+    background: #c8edcf;
+  }
+
+  .btn-back {
+    background: #eeeeee;
+    color: #333;
+  }
+  .btn-back:hover {
+    background: #e2e2e2;
+  }
+
+  /* Table detail style */
+  .detail-table th {
+    width: 150px;
+    font-weight: 600;
+    color: #444;
+    padding: 10px 0;
+  }
+  .detail-table td {
+    padding: 10px 0;
+  }
+
+  /* Role badges */
+  .role-admin {
+    background: #ffe0e0;
+    color: #b00000;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .role-staff {
+    background: #d7e7ff;
+    color: #0d3c84;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .role-customer {
+    background: #e4e4e4;
+    color: #333;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+
+  /* Status badges */
+  .status-active {
+    background: #d4f5df;
+    color: #1b6b2f;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+  .status-disable {
+    background: #ffe0e5;
+    color: #a3001f;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+</style>
+
 {% endblock %}

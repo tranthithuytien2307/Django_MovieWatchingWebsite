@@ -1,5 +1,9 @@
-{% extends "base.html" %} {% block title %}Danh sách User{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Danh sách User{% endblock %}
+
+{% block content %}
 <div class="container-fluid">
+
   <!-- Breadcrumb -->
   <nav class="mb-3">
     <ol class="breadcrumb">
@@ -9,19 +13,21 @@
   </nav>
 
   <!-- Buttons -->
-  <div class="mb-3">
-    <button class="btn btn-primary">
-      <i class="bi bi-person-plus"></i> Tạo user
-    </button>
-    <button class="btn btn-success">
-      <i class="bi bi-arrow-clockwise"></i> Refresh
-    </button>
+  <div class="mb-3 d-flex gap-2">
+    <a href="{% url 'user_create' %}" class="btn btn-primary px-3 shadow-sm btn-action">
+      <i class="fa-solid fa-user-plus me-1"></i> Tạo user
+    </a>
+
+    <a href="" class="btn btn-success px-3 shadow-sm btn-action">
+      <i class="fa-solid fa-rotate-right me-1"></i> Refresh
+    </a>
   </div>
 
   <!-- User Table -->
-  <div class="card">
-    <div class="card-body">
-      <table class="table table-hover align-middle">
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-4">
+
+      <table class="table table-hover align-middle table-custom">
         <thead class="table-light">
           <tr>
             <th>Avatar</th>
@@ -32,40 +38,135 @@
             <th>Trạng thái</th>
           </tr>
         </thead>
+
         <tbody>
           {% for user in users %}
-          <tr
-            style="cursor: pointer"
-            onclick="window.location='{% url 'user_detail' user.id %}'"
-          >
+          <tr class="table-row"
+              onclick="window.location='{% url 'user_detail' user.id %}'">
+            
+            <!-- Avatar -->
             <td>
-              <div
-                class="rounded-circle bg-secondary text-white text-center"
-                style="width: 40px; height: 40px; line-height: 40px"
-              >
-                {{ user.name|slice:":1"|upper }}
-              </div>
-            </td>
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.phone }}</td>
-            <td><span class="badge bg-secondary">{{ user.role }}</span></td>
-            <td>
-              {% if user.active %}
-              <span class="badge bg-success">Đã kích hoạt</span>
+              {% if user.avatar %}
+                <img src="{{ user.avatar }}" class="avatar-img">
               {% else %}
-              <span class="badge bg-warning text-dark">Chưa kích hoạt</span>
+                <div class="avatar-placeholder">
+                  {{ user.name|slice:":1"|upper }}
+                </div>
               {% endif %}
             </td>
+
+            <td class="fw-semibold">{{ user.name }}</td>
+            <td class="text-muted">{{ user.email }}</td>
+            <td>{{ user.phone }}</td>
+
+            <!-- Role -->
+            <td>
+              {% if user.role == "admin" %}
+                <span class="badge role-badge role-admin">Admin</span>
+              {% elif user.role == "staff" %}
+                <span class="badge role-badge role-staff">Staff</span>
+              {% else %}
+                <span class="badge role-badge role-customer">Customer</span>
+              {% endif %}
+            </td>
+
+            <!-- Status -->
+            <td>
+              {% if user.status %}
+                <span class="badge status-active">Đang hoạt động</span>
+              {% else %}
+                <span class="badge status-disable">Đã vô hiệu hóa</span>
+              {% endif %}
+            </td>
+
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="text-center">Không có user nào</td>
+            <td colspan="6" class="text-center py-3 text-muted">
+              Không có user nào
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+
     </div>
   </div>
 </div>
+
+<style>
+  /* Avatar */
+  .avatar-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .avatar-placeholder {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  /* Hover row */
+  .table-row {
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .table-row:hover {
+    background: #eef5ff !important;
+  }
+
+  /* Nút */
+  .btn-action {
+    transition: 0.2s;
+  }
+  .btn-action:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Bảng */
+  .table-custom th {
+    font-weight: 600;
+    color: #4a4a4a;
+  }
+
+  /* Role badge */
+  .role-badge {
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .role-admin {
+    background: #ffdddd;
+    color: #b30000;
+  }
+  .role-staff {
+    background: #cfe2ff;
+    color: #084298;
+  }
+  .role-customer {
+    background: #e2e3e5;
+    color: #444;
+  }
+
+  /* Status badge */
+  .status-active {
+    background: #d1e7dd;
+    color: #0f5132;
+  }
+  .status-disable {
+    background: #f8d7da;
+    color: #842029;
+  }
+</style>
+
 {% endblock %}

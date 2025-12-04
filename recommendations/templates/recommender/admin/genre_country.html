@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="mb-4 fw-bold text-primary">Thể loại & Quốc gia</h2>
+
+  <!-- ================== GENRE LIST ================== -->
+  <div class="card shadow genre-card border-0 mb-5">
+    <div class="card-header bg-white py-3 border-0 border-bottom">
+      <h4 class="fw-semibold text-secondary mb-0">Danh sách thể loại</h4>
+    </div>
+
+    <div class="card-body">
+
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Tên</th>
+            <th>Slug</th>
+            <th class="text-center" style="width: 120px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in genres %}
+          <tr>
+            <td>{{ g.name }}</td>
+            <td>{{ g.slug }}</td>
+            <td class="text-center">
+              <a href="{% url 'genre_edit' g.id %}" class="btn btn-sm action-btn edit-btn me-1">
+                <i class="fa fa-pen"></i>
+              </a>
+              <a href="{% url 'genre_delete' g.id %}" class="btn btn-sm action-btn delete-btn">
+                <i class="fa fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Add Genre -->
+      <div class="pt-4 mt-3 border-top">
+        <form method="POST">
+          {% csrf_token %}
+          <h5 class="fw-semibold mb-3">Thêm thể loại</h5>
+          <div class="d-flex gap-2 flex-column flex-md-row">
+            <input name="name" class="form-control" placeholder="Tên thể loại" required>
+            <button formaction="{% url 'genre_add' %}" class="btn btn-primary add-btn px-4">
+              <i class="fa fa-plus"></i> Thêm
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================== COUNTRY LIST ================== -->
+  <div class="card shadow country-card border-0">
+    <div class="card-header bg-white py-3 border-0 border-bottom">
+      <h4 class="fw-semibold text-secondary mb-0">Danh sách quốc gia</h4>
+    </div>
+
+    <div class="card-body">
+
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Code</th>
+            <th>Tên</th>
+            <th class="text-center" style="width: 120px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in countries %}
+          <tr>
+            <td>{{ c.code }}</td>
+            <td>{{ c.name }}</td>
+            <td class="text-center">
+              <a href="{% url 'country_edit' c.id %}" class="btn btn-sm action-btn edit-btn me-1">
+                <i class="fa fa-pen"></i>
+              </a>
+              <a href="{% url 'country_delete' c.id %}" class="btn btn-sm action-btn delete-btn">
+                <i class="fa fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Add Country -->
+      <div class="pt-4 mt-3 border-top">
+        <form method="POST">
+          {% csrf_token %}
+          <h5 class="fw-semibold mb-3">Thêm quốc gia</h5>
+          <div class="d-flex gap-2 flex-column flex-md-row">
+            <input name="code" class="form-control" placeholder="Code (VN, US, JP,..)">
+            <input name="name" class="form-control" placeholder="Tên quốc gia" required>
+            <button formaction="{% url 'country_add' %}" class="btn btn-primary add-btn px-4">
+              <i class="fa fa-plus"></i> Thêm
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<style>
+  /* Card Styling */
+  .card {
+    border-radius: 14px;
+  }
+
+  .genre-card, .country-card {
+    transition: 0.2s;
+  }
+  .genre-card:hover,
+  .country-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+  }
+
+  /* Table Hover */
+  .table-hover tbody tr:hover {
+    background-color: #eef2ff !important;
+  }
+
+  /* Input */
+  .form-control {
+    border-radius: 10px;
+    border-color: #cfd4e0;
+  }
+  .form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 8px rgba(99,102,241,0.3);
+  }
+
+  /* Add Button */
+  .add-btn {
+    background-color: #4f46e5 !important;
+    border-radius: 10px;
+    color: #fff;
+  }
+  .add-btn:hover {
+    background-color: #4338ca !important;
+  }
+
+  /* Action Buttons */
+  .action-btn {
+    width: 36px;
+    height: 36px !important;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .edit-btn {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  .edit-btn:hover {
+    background: #c7d2fe;
+  }
+  .delete-btn {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  .delete-btn:hover {
+    background: #fecaca;
+  }
+</style>
+
+{% endblock %}

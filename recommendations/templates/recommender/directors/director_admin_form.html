@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ form.instance.pk|yesno:"Cập nhật đạo diễn,Tạo đạo diễn" }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h3 class="mb-3 fw-bold text-primary">
+    <i class="fa-solid fa-user-pen"></i>
+    {{ form.instance.pk|yesno:"Cập nhật đạo diễn,Tạo đạo diễn" }}
+  </h3>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="text-end mt-3">
+          <a href="{% url 'director_admin_list' %}" class="btn btn-secondary me-2">
+            <i class="fa-solid fa-circle-arrow-left"></i> Quay lại
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> Lưu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  .form-label { font-weight: 600; }
+  input, select, textarea {
+    border-radius: 6px !important;
+  }
+</style>
+{% endblock %}

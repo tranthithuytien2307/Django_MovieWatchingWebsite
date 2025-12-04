@@ -16,9 +16,12 @@
     <p>Đang tải đánh giá...</p>
   </div>
 
-  <!-- Write review (only if logged in) -->
-  {% if user.is_authenticated %}
-  <div class="write-review" style="margin-top: 20px">
+  <!-- Write review -->
+  <div
+    class="write-review"
+    id="write-review"
+    style="margin-top: 20px; display: none"
+  >
     <h4>Viết đánh giá của bạn</h4>
 
     <label>⭐ Rating (1–5):</label>
@@ -35,38 +38,64 @@
     <textarea
       id="review-content"
       rows="4"
-      style="width: 100%; padding: 10px; border-radius: 6px"
+      style="
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #555;
+        background: #0f0f0f;
+        color: #fff;
+        font-size: 14px;
+        resize: vertical;
+        margin-bottom: 15px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+      "
       placeholder="Viết cảm nhận của bạn..."
     ></textarea>
 
     <button
       id="submit-review"
       style="
-        margin-top: 10px;
-        padding: 8px 16px;
-        background: #e53935;
+        padding: 10px 20px;
+        background: linear-gradient(90deg, #e53935, #d32f2f);
         color: #fff;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
       "
+      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.5)';"
+      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.4)';"
     >
       Gửi đánh giá
     </button>
   </div>
-  {% else %}
-  <p style="margin-top: 20px">
+
+  <!-- Login prompt -->
+  <p id="login-prompt" style="margin-top: 20px">
     <a href="/login" style="color: #4fc3f7">Đăng nhập</a> để viết đánh giá.
   </p>
-  {% endif %}
 </div>
 
 <script>
   const movieId = "{{ movie.id }}";
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
+  // Hiển thị form hoặc prompt tùy token
+  if (token) {
+    document.getElementById("write-review").style.display = "block";
+    document.getElementById("login-prompt").style.display = "none";
+  } else {
+    document.getElementById("write-review").style.display = "none";
+    document.getElementById("login-prompt").style.display = "block";
+  }
+
+  // Load danh sách review
   async function loadReviews() {
-    const res = await fetch(`/api/reviews/${movieId}`);
+    const res = await fetch(`/movies/${movieId}/reviews/`);
     const data = await res.json();
 
     const container = document.getElementById("review-list");
@@ -79,41 +108,48 @@
     container.innerHTML = data
       .map(
         (rv) => `
-        <div style="padding:10px 0;border-bottom:1px solid #444;">
-          <b>${rv.userName}</b> - ⭐ ${rv.rating}
-          <p>${rv.content}</p>
-        </div>
-      `
+      <div style="padding:10px 0;border-bottom:1px solid #444;">
+        <b>${rv.userName}</b> - ⭐ ${rv.rating}
+        <p>${rv.content}</p>
+      </div>
+    `
       )
       .join("");
   }
 
+  // Load thống kê rating
   async function loadStats() {
-    const res = await fetch(`/api/reviews/${movieId}/stats`);
+    const res = await fetch(`/movies/${movieId}/rating/`);
     const data = await res.json();
 
     document.getElementById(
       "review-stats"
-    ).innerHTML = `⭐ ${data.average_rating}/5 — ${data.total_reviews} đánh giá`;
+    ).textContent = `⭐ ${data.average_rating}/5 — ${data.total_reviews} đánh giá`;
   }
 
   loadReviews();
   loadStats();
 
+  // Gửi review
   const btn = document.getElementById("submit-review");
   if (btn) {
     btn.addEventListener("click", async () => {
       const rating = document.getElementById("review-rating").value;
       const content = document.getElementById("review-content").value;
 
-      const res = await fetch("/api/reviews", {
+      if (!token) {
+        alert("Bạn cần đăng nhập để viết đánh giá.");
+        return;
+      }
+
+      const res = await fetch("/reviews/create/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          movie: movieId, // phải match field 'movie' trong serializer
+          movie: movieId,
           rating,
           content,
         }),
@@ -121,10 +157,12 @@
 
       if (res.ok) {
         alert("Đánh giá thành công!");
+        document.getElementById("review-content").value = "";
         loadReviews();
         loadStats();
       } else {
-        alert("Lỗi khi gửi đánh giá.");
+        const data = await res.json();
+        alert("Lỗi: " + JSON.stringify(data));
       }
     });
   }

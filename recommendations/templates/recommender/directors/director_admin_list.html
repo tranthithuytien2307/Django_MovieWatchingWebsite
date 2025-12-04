@@ -3,22 +3,46 @@
 
 {% block content %}
 <div class="container-fluid py-4">
+
   <!-- Breadcrumb -->
   <nav class="mb-3">
-    <ol class="breadcrumb bg-light p-2 rounded">
-      <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+    <ol class="breadcrumb bg-white shadow-sm px-3 py-2 rounded">
+      <li class="breadcrumb-item">
+        <a href="#" class="text-decoration-none"><i class="fa-solid fa-house"></i> Dashboard</a>
+      </li>
       <li class="breadcrumb-item active">Danh sách đạo diễn</li>
     </ol>
   </nav>
 
-  <!-- Buttons -->
-  <div class="mb-3 d-flex gap-2">
-    <a href="{% url 'director_create' %}" class="btn btn-primary">
-      <i class="bi bi-plus-lg"></i> Thêm đạo diễn
-    </a>
-    <a href="{% url 'director_admin_list' %}" class="btn btn-success">
-      <i class="bi bi-arrow-clockwise"></i> Refresh
-    </a>
+  <!-- Top buttons -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'director_create' %}" class="btn btn-success">
+        <i class="fa-solid fa-plus"></i> Thêm mới
+      </a>
+
+      <a href="{% url 'director_admin_list' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-rotate-right"></i> Làm mới
+      </a>
+    </div>
+
+    <!-- Search -->
+    <form method="get" class="d-flex align-items-center" style="gap: 10px;">
+      <input
+        type="text"
+        name="search"
+        value="{{ search_query }}"
+        placeholder="Tìm kiếm đạo diễn..."
+        class="form-control"
+        style="width: 260px;"
+      />
+
+      <button class="btn btn-primary">
+        <i class="fa fa-search"></i>
+      </button>
+    </form>
+
   </div>
 
   <!-- Director Cards -->
@@ -26,29 +50,47 @@
     {% if page_obj %}
       {% for director in page_obj %}
         <div class="col-md-4 col-lg-3">
-          <div class="card h-100 shadow-sm director-card" onclick="window.location.href='{% url 'director_detail' director.id %}'">
+          <div class="card director-card shadow-sm">
+
+            <!-- Action buttons -->
+            <div class="director-actions">
+              <a href="{% url 'director_detail' director.id %}" class="btn-action info">
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              <a href="{% url 'director_update' director.id %}" class="btn-action edit">
+                <i class="fa-solid fa-pen"></i>
+              </a>
+              <a href="{% url 'director_delete' director.id %}" class="btn-action delete">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </div>
+
             {% if director.avatar %}
-              <img src="{{ director.avatar }}" class="card-img-top" alt="{{ director.name }}">
+              <img src="{{ director.avatar }}" class="card-img-top director-img" alt="{{ director.name }}">
             {% else %}
-              <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
-                Không có ảnh
+              <div class="director-img d-flex align-items-center justify-content-center">
+                <i class="fa-solid fa-user-tie fa-2x"></i>
               </div>
             {% endif %}
-            <div class="card-body d-flex flex-column text-center">
-              <h5 class="card-title mb-1">{{ director.name }}</h5>
-              {% if director.birthday %}
-                <p class="mb-0 text-muted">{{ director.birthday|date:"d/m/Y" }}</p>
-              {% else %}
-                <p class="mb-0 text-muted">Chưa rõ</p>
-              {% endif %}
+
+            <div class="card-body text-center">
+              <h5 class="card-title">{{ director.name }}</h5>
+
+              <p class="mb-0 text-muted">
+                {% if director.birthday %}
+                  {{ director.birthday|date:"d/m/Y" }}
+                {% else %}
+                  Chưa rõ ngày sinh
+                {% endif %}
+              </p>
             </div>
+
           </div>
         </div>
       {% endfor %}
+
     {% else %}
-      <div class="col-12 text-center text-muted">
-        Chưa có đạo diễn nào trong hệ thống
-      </div>
+      <div class="col-12 text-center text-muted">Chưa có đạo diễn nào</div>
     {% endif %}
   </div>
 
@@ -56,65 +98,131 @@
   {% if page_obj.has_other_pages %}
   <nav aria-label="Page navigation" class="mt-4">
     <ul class="pagination justify-content-center">
+
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"><i class="fa-solid fa-angle-left"></i></a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-angle-left"></i></span></li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
         {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
-          {% if page_obj.number == num %}
+          {% if num == page_obj.number %}
             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
           {% else %}
-            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a></li>
           {% endif %}
         {% endif %}
       {% endfor %}
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}"><i class="fa-solid fa-angle-right"></i></a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-angle-right"></i></span></li>
       {% endif %}
+
     </ul>
   </nav>
   {% endif %}
-
 </div>
 
 <style>
+  /* BUTTONS */
+  .btn-success {
+    background: #4f46e5 !important;
+    border: none;
+  }
+  .btn-success:hover { background: #4338ca !important; }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  .btn-primary {
+    background: #6366f1;
+    border: none;
+  }
+  .btn-primary:hover { background: #4f46e5; }
+
+  /* CARD */
   .director-card {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
+    transition: 0.25s;
+    position: relative;
+    border: 1px solid #e5e7eb;
   }
+
   .director-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
   }
-  .card-img-top {
-    height: 200px;
+
+  .director-img {
+    height: 170px;
     object-fit: cover;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
   }
-  .card-title {
-    font-weight: 600;
+
+  /* ACTION BUTTONS */
+  .director-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: 0.25s ease;
   }
+
+  .director-card:hover .director-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .btn-action {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    font-size:14px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    transition:0.25s;
+  }
+  .btn-action:hover { transform: scale(1.1); }
+
+  .btn-action.info { color:#0ea5e9; }
+  .btn-action.edit { color:#6366f1; }
+  .btn-action.delete { color:#ef4444; }
+  .btn-action.delete:hover {
+    background:#ef4444; color:white;
+  }
+
+  /* PAGINATION */
   .pagination .page-link {
-    color: #0d6efd;
+    border-radius: 10px !important;
+    margin: 0 4px;
+    border: none;
+    padding: 8px 14px;
+    background:white;
+    color:#4f46e5;
+    box-shadow:0 2px 6px rgba(0,0,0,0.12);
   }
+
   .pagination .page-item.active .page-link {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    color: #fff;
-  }
-  .pagination .page-item.disabled .page-link {
-    color: #6c757d;
+    background:#4f46e5;
+    color:white;
   }
 </style>
+
 {% endblock %}

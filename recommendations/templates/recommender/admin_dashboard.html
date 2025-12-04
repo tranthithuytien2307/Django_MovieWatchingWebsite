@@ -1,55 +1,78 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-  <h3>Dashboard / Tổng quan</h3>
+<h3 class="mb-4 text-primary">
+  <i class="fa-solid fa-gauge-high"></i> Dashboard / Tổng quan
+</h3>
 
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card-box p-3 text-white" style="background:#f1c40f;">
-        <h4>{{ stats.orders }}</h4>
-        <p>Đơn hàng mới</p>
+<!-- ======== TOP STATS ======== -->
+<div class="row g-4 mb-5">
+  {% for card in cards %}
+  <div class="col-md-3">
+    <a href="{% url card.url %}" style="text-decoration: none;">
+      <div class="card shadow-sm border-0 text-white" style="border-radius:20px; background: {{ card.bg }}; transition: transform 0.3s, box-shadow 0.3s;">
+        <div class="card-body text-center py-4">
+          <h3 class="fw-bold mb-2">{{ card.value }}</h3>
+          <p class="m-0"><i class="fa-solid {{ card.icon }}"></i> {{ card.label }}</p>
+        </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-box p-3 text-white" style="background:#e74c3c;">
-        <h4>{{ stats.movies }}</h4>
-        <p>Phim mới</p>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-box p-3 text-white" style="background:#3498db;">
-        <h4>{{ stats.users.new }}/{{ stats.users.total }}</h4>
-        <p>User mới/Tổng số user</p>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card-box p-3 text-white" style="background:#2ecc71;">
-        <h4>{{ stats.posts.new }}/{{ stats.posts.total }}</h4>
-        <p>Bài viết mới/Tổng số bài</p>
-      </div>
-    </div>
+    </a>
   </div>
+  {% endfor %}
+</div>
 
-  <div class="card p-3">
-    <canvas id="revenueChart"></canvas>
-  </div>
+<!-- ======== TOP VIEWED MOVIES ======== -->
+<div class="card p-4 shadow-sm border-0 mb-5" style="border-radius:20px;">
+  <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-eye"></i> Top 5 phim được xem nhiều nhất</h5>
+  <canvas id="viewsChart"></canvas>
+</div>
 
-  <script>
-    const ctx = document.getElementById('revenueChart');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: {{ labels|safe }},
-        datasets: [{
-          label: 'Doanh thu',
-          data: {{ revenue|safe }},
-          borderColor: 'rgba(52, 152, 219,1.0)',
-          backgroundColor: 'rgba(52, 152, 219,0.2)',
-          tension: 0.3
-        }]
+<style>
+  /* Hover effect cho card */
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+  }
+
+  /* Typography tổng quan */
+  h3, h5 {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  p {
+    font-size: 0.95rem;
+  }
+
+  a { color: inherit; }
+</style>
+
+<script>
+  const ctx = document.getElementById('viewsChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ labels|safe }},
+      datasets: [{
+        label: 'Lượt xem',
+        data: {{ views|safe }},
+        backgroundColor: ['#3498db','#8e44ad','#27ae60','#c0392b','#f39c12'],
+        borderColor: ['#2980b9','#71368a','#1e8449','#992d22','#d68910'],
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
       },
-    });
-  </script>
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { font: { weight: '500' } } }
+      }
+    }
+  });
+</script>
 {% endblock %}

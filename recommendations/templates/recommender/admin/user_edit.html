@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Cập nhật User{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'users_list' %}">Danh sách user</a></li>
+      <li class="breadcrumb-item active">Cập nhật user</li>
+    </ol>
+  </nav>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} shadow-sm">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold">
+        <i class="fa-solid fa-user-pen me-2"></i> Cập nhật thông tin User
+      </h5>
+      <a href="{% url 'users_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại
+      </a>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Avatar Preview -->
+      <div class="text-center mb-4">
+        {% if user.avatar %}
+          <img src="{{ user.avatar }}" class="rounded-circle shadow-sm"
+               style="width:120px; height:120px; object-fit:cover;">
+        {% else %}
+          <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center shadow-sm"
+               style="width:120px; height:120px; font-size:40px;">
+            {{ user.name|slice:":1"|upper }}
+          </div>
+        {% endif %}
+        <p class="text-muted mt-2">Ảnh đại diện hiện tại</p>
+      </div>
+
+      <form method="POST" class="px-2">
+        {% csrf_token %}
+
+        <div class="row g-4">
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Avatar (URL)</label>
+            <input type="text" name="avatar" value="{{ user.avatar }}" class="form-control shadow-sm">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Họ tên</label>
+            <input type="text" name="name" value="{{ user.name }}" class="form-control shadow-sm" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" name="email" value="{{ user.email }}" class="form-control shadow-sm" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Số điện thoại</label>
+            <input type="text" name="phone" value="{{ user.phone }}" class="form-control shadow-sm" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Role</label>
+            <select class="form-select shadow-sm" name="role">
+              <option value="customer" {% if user.role == "customer" %}selected{% endif %}>Customer</option>
+              <option value="admin" {% if user.role == "admin" %}selected{% endif %}>Admin</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="mt-4">
+          <button class="btn btn-primary px-4">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+          </button>
+
+          <a href="{% url 'user_detail' user.id %}" class="btn btn-secondary ms-2 px-4">
+            <i class="fa-solid fa-xmark"></i> Hủy
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
