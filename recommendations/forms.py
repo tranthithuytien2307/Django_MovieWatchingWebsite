@@ -1,6 +1,7 @@
 from django import forms
 from .models import Movie
 from .models import Director
+from .models import Actor
 
 class DirectorForm(forms.ModelForm):
     class Meta:
@@ -22,5 +23,11 @@ class MovieForm(forms.ModelForm):
             "views", "rating", "status", "price",
             "country", "genres", "director", "actors"
         ]
-
-
+class ActorForm(forms.ModelForm):
+    class Meta:
+        model = Actor
+        fields = ["name", "avatar", "birthday", "description", "image"]
+        widgets = {
+            "birthday": forms.DateInput(attrs={"type": "date"}),
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
